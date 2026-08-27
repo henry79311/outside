@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外出包確認清單</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #fff;
+    --ocean: #1a6b8a;
+    --ocean-dark: #0d4d6b;
+    --green: #3a8a5c;
+    --coral: #e05a4e;
+    --sand: #f5f0e8;
+    --text: #1e2a35;
+    --muted: #8a9ab0;
+    --border: #e2eaf2;
+    --checked-bg: #f0f7f4;
+    --checked-text: #9ab8a8;
+    --shadow: 0 2px 8px rgba(26,107,138,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+
+  /* Header */
+  .hero { background: linear-gradient(135deg, #0d4d6b 0%, #1a6b8a 60%, #2a8aad 100%); padding: 32px 20px 50px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(255,255,255,0.03) 24px, rgba(255,255,255,0.03) 25px); }
+  .hero::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 40px; background: var(--bg); clip-path: ellipse(55% 100% at 50% 100%); }
+  .hero-content { position: relative; z-index: 1; }
+  .hero-emoji { font-size: 2.2rem; display: block; margin-bottom: 8px; }
+  .hero h1 { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .hero-sub { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+
+  /* Progress */
+  .progress-wrap { max-width: 500px; margin: -10px auto 0; padding: 0 16px; position: relative; z-index: 1; }
+  .progress-card { background: var(--card); border-radius: 16px; padding: 14px 18px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px; }
+  .progress-text { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+  .progress-text strong { font-size: 1.1rem; color: var(--ocean); }
+  .progress-bar-wrap { flex: 1; height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--ocean), var(--green)); border-radius: 999px; transition: width 0.4s ease; }
+  .reset-btn { font-size: 0.72rem; padding: 5px 12px; background: transparent; border: 1.5px solid var(--border); border-radius: 999px; color: var(--muted); cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: all 0.2s; white-space: nowrap; }
+  .reset-btn:hover { border-color: var(--coral); color: var(--coral); }
+
+  /* Ready banner */
+  .ready-banner { max-width: 500px; margin: 12px auto 0; padding: 0 16px; display: none; }
+  .ready-banner.show { display: block; }
+  .ready-inner { background: linear-gradient(135deg, var(--green), #256040); border-radius: 12px; padding: 12px 18px; text-align: center; color: white; font-weight: 700; font-size: 0.95rem; }
+
+  /* Content */
+  .content { max-width: 500px; margin: 16px auto 0; padding: 0 16px; }
+
+  /* Category */
+  .category { background: var(--card); border-radius: 16px; margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .cat-header { display: flex; align-items: center; gap: 10px; padding: 13px 16px; cursor: pointer; user-select: none; border-bottom: 1px solid var(--border); }
+  .cat-emoji { font-size: 1.15rem; }
+  .cat-title { font-size: 0.92rem; font-weight: 700; flex: 1; }
+  .cat-count { font-size: 0.7rem; color: var(--muted); background: var(--bg); padding: 2px 8px; border-radius: 999px; }
+  .cat-toggle { font-size: 0.65rem; color: var(--muted); transition: transform 0.2s; }
+  .cat-toggle.open { transform: rotate(180deg); }
+  .cat-items { padding: 6px 8px 10px; }
+
+  /* Item */
+  .item { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 10px; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+  .item:hover { background: var(--bg); }
+  .item.checked { background: var(--checked-bg); }
+
+  .checkbox { width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.75rem; color: transparent; }
+  .item.checked .checkbox { background: var(--green); border-color: var(--green); color: white; }
+
+  .item-label { font-size: 0.9rem; color: var(--text); flex: 1; line-height: 1.4; transition: color 0.2s; }
+  .item.checked .item-label { color: var(--checked-text); text-decoration: line-through; text-decoration-color: var(--checked-text); }
+
+  .item-note { font-size: 0.7rem; color: var(--muted); background: var(--bg); padding: 2px 7px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
+  .item.checked .item-note { opacity: 0.4; }
+
+  /* accent colors */
+  .cat-baby .cat-header { border-left: 4px solid #e8a838; }
+  .cat-safe .cat-header { border-left: 4px solid #e05a4e; }
+  .cat-move .cat-header { border-left: 4px solid #1a6b8a; }
+  .cat-me .cat-header { border-left: 4px solid #6d6875; }
+  .cat-sun .cat-header { border-left: 4px solid #f4a261; }
+
+  /* Floating reset */
+  .fab { position: fixed; bottom: 24px; right: 20px; background: var(--ocean); color: white; border: none; border-radius: 999px; padding: 12px 20px; font-size: 0.82rem; font-family: 'Noto Sans TC', sans-serif; font-weight: 500; cursor: pointer; box-shadow: 0 4px 16px rgba(26,107,138,0.3); transition: all 0.2s; z-index: 10; }
+  .fab:hover { background: var(--ocean-dark); transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-content">
+    <span class="hero-emoji">🎒</span>
+    <h1>外出包確認清單</h1>
+    <p class="hero-sub">每次出門前快速確認 · 沖繩親子自駕</p>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-card">
+    <div class="progress-text"><strong id="checked-count">0</strong> / <span id="total-count">0</span></div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    <button class="reset-btn" onclick="resetAll()">出發前重置</button>
+  </div>
+</div>
+
+<div class="ready-banner" id="ready-banner">
+  <div class="ready-inner">✅ 全部備妥，出發！</div>
+</div>
+
+<div class="content">
+
+  <!-- 寶寶必需品 -->
+  <div class="category cat-baby">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-emoji">👶</span>
+      <span class="cat-title">寶寶必需品</span>
+      <span class="cat-count" data-cat></span>
+      <span class="cat-toggle open">▼</span>
+    </div>
+    <div class="cat-items">
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">奶瓶 + 奶粉</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">保溫瓶（熱水）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">奶嘴 + 奶嘴鏈</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">副食品 / 零食</span><span class="item-note">視行程</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">圍兜 + 口水巾</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">餐具（碗、湯匙）</span><span class="item-note">視行程</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">益生菌</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">玩具 / 安撫物</span></div>
+    </div>
+  </div>
+
+  <!-- 尿布 & 清潔 -->
+  <div class="category cat-safe">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-emoji">🚼</span>
+      <span class="cat-title">尿布 & 清潔</span>
+      <span class="cat-count" data-cat></span>
+      <span class="cat-toggle open">▼</span>
+    </div>
+    <div class="cat-items">
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">尿布（多備2片）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">尿布墊</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">濕紙巾</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">屁屁噴 / 屁屁巾</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">防漏尿布袋（裝換下的）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">消毒（黃金盾）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">備換衣服（寶寶）</span></div>
+    </div>
+  </div>
+
+  <!-- 防曬 & 戶外 -->
+  <div class="category cat-sun">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-emoji">☀️</span>
+      <span class="cat-title">防曬 & 戶外</span>
+      <span class="cat-count" data-cat></span>
+      <span class="cat-toggle open">▼</span>
+    </div>
+    <div class="cat-items">
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">防曬乳（大人 + 寶寶）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">寶寶帽子</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">防蚊液（嬰兒用）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">夾式風扇</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">毯子（冷氣房備用）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">雨傘 / 雨罩</span><span class="item-note">視天氣</span></div>
+    </div>
+  </div>
+
+  <!-- 移動 & 裝備 -->
+  <div class="category cat-move">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-emoji">🚗</span>
+      <span class="cat-title">移動 & 裝備</span>
+      <span class="cat-count" data-cat></span>
+      <span class="cat-toggle open">▼</span>
+    </div>
+    <div class="cat-items">
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">背巾 / 側背巾</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">充電寶</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">水壺（大人）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">寶寶水壺</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">紫外線消毒器</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">購物袋 / 大提袋</span></div>
+    </div>
+  </div>
+
+  <!-- 大人隨身 -->
+  <div class="category cat-me">
+    <div class="cat-header" onclick="toggleCat(this)">
+      <span class="cat-emoji">👤</span>
+      <span class="cat-title">大人隨身</span>
+      <span class="cat-count" data-cat></span>
+      <span class="cat-toggle open">▼</span>
+    </div>
+    <div class="cat-items">
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">手機</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">錢包（日幣 + 信用卡）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">口罩</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">墨鏡</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">濕紙巾（大人用）</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">常備藥</span></div>
+      <div class="item" onclick="toggle(this)"><div class="checkbox">✓</div><span class="item-label">耳塞（煙火 / 吵雜場所）</span><span class="item-note">視行程</span></div>
+    </div>
+  </div>
+
+</div>
+
+<button class="fab" onclick="resetAll()">🔄 重置清單，準備出發</button>
+
+<script>
+  function toggle(el) {
+    el.classList.toggle('checked');
+    updateProgress();
+    save();
+  }
+
+  function toggleCat(header) {
+    const items = header.nextElementSibling;
+    const arrow = header.querySelector('.cat-toggle');
+    const isOpen = items.style.display !== 'none';
+    items.style.display = isOpen ? 'none' : 'block';
+    arrow.classList.toggle('open', !isOpen);
+  }
+
+  function updateProgress() {
+    const all = document.querySelectorAll('.item');
+    const checked = document.querySelectorAll('.item.checked');
+    const total = all.length;
+    const done = checked.length;
+    document.getElementById('checked-count').textContent = done;
+    document.getElementById('total-count').textContent = total;
+    const pct = total ? (done / total * 100) : 0;
+    document.getElementById('progress-bar').style.width = pct + '%';
+
+    // ready banner
+    const banner = document.getElementById('ready-banner');
+    banner.classList.toggle('show', done === total && total > 0);
+
+    // cat counts
+    document.querySelectorAll('.category').forEach(cat => {
+      const t = cat.querySelectorAll('.item').length;
+      const d = cat.querySelectorAll('.item.checked').length;
+      const el = cat.querySelector('.cat-count');
+      if (el) el.textContent = d + ' / ' + t;
+    });
+  }
+
+  function resetAll() {
+    document.querySelectorAll('.item.checked').forEach(el => el.classList.remove('checked'));
+    updateProgress();
+    try { localStorage.removeItem('outing_checklist'); } catch(e) {}
+  }
+
+  function save() {
+    const state = Array.from(document.querySelectorAll('.item')).map(el => el.classList.contains('checked') ? 1 : 0);
+    try { localStorage.setItem('outing_checklist', JSON.stringify(state)); } catch(e) {}
+  }
+
+  function load() {
+    try {
+      const saved = localStorage.getItem('outing_checklist');
+      if (!saved) return;
+      JSON.parse(saved).forEach((v, i) => {
+        const items = document.querySelectorAll('.item');
+        if (items[i] && v) items[i].classList.add('checked');
+      });
+    } catch(e) {}
+  }
+
+  load();
+  updateProgress();
+</script>
+</body>
+</html>
